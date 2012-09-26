@@ -1,4 +1,7 @@
-import sys,socket,subprocess,os;
+import sys
+import socket
+import subprocess
+import os
 
 s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);
 s.connect((sys.argv[1],int(sys.argv[2])));
